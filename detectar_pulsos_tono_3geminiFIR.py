@@ -64,7 +64,7 @@ if __name__ == "__main__":
     
     # Crear una señal base con ruido y añadir pulsos en momentos específicos (ej: 1.0s-1.3s y 2.1s-2.4s)
     senal_con_ruido = ruido.copy()
-    pulso_mask = ((t >= 1.0) & (t <= 1.3)) | ((t >= 2.1) & (t <= 2.4)) | ((t >= 0.3) & (t <= 0.6))
+    pulso_mask = ((t >= 1.0) & (t <= 1.3)) | ((t >= 2.1) & (t <= 2.4)) | ((t >= 0.2) & (t <= 0.9))
     
     # Tono sinusoidal de 60 Hz modulado durante el pulso
     tono_puro = 4.0 * np.sin(2 * np.pi * f_pulsos * t)
