@@ -47,6 +47,40 @@ def diseñar_fir_pasa_bajos(fs, fc, N):
     
     return h_ideal * w
 
+
+def diseñar_fir_pasa_banda(fs, fc_low, fc_high, N):
+    if not np.isfinite(fs) or fs <= 0:
+        raise ValueError("La frecuencia de muestreo fs debe ser positiva.")
+    if (
+        not np.isfinite(fc_low)
+        or not np.isfinite(fc_high)
+        or not 0 < fc_low < fc_high < fs / 2
+    ):
+        raise ValueError(
+            "Las frecuencias de corte deben cumplir 0 < fc_low < fc_high < fs/2."
+        )
+    if not isinstance(N, (int, np.integer)) or N < 3 or N % 2 == 0:
+        raise ValueError("El número de taps N debe ser impar y mayor o igual que 3.")
+    
+    M = N - 1
+    centro = M // 2
+    wc_low = 2 * np.pi * (fc_low / fs)
+    wc_high = 2 * np.pi * (fc_high / fs)
+    n = np.arange(N)
+    desplazamiento = n - centro
+    
+    denom = np.pi * desplazamiento
+    denom[centro] = 1.0
+    
+    h_ideal = (
+        np.sin(wc_high * desplazamiento) - np.sin(wc_low * desplazamiento)
+    ) / denom
+    h_ideal[centro] = (wc_high - wc_low) / np.pi
+    
+    w = 0.54 - 0.46 * np.cos(2 * np.pi * n / M)
+    
+    return h_ideal * w
+
 # 1. Parámetros del filtro
 fs = 1000.0   # Frecuencia de muestreo (Hz)
 fc = 200.0    # Frecuencia de corte (Hz)
