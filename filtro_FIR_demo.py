@@ -158,7 +158,7 @@ salida_low = np.convolve(entrada, h_low, mode='same')
 
 h_band = diseñar_fir_pasa_banda(fs, 75-10, 75+10, N)
 salida_band = np.convolve(entrada, h_band, mode='same')
-senal_filt, env, detecciones = detectar_pulso_fir(salida_band, h_band)
+senal_filt, env, detecciones = detectar_pulso_fir(salida_band)
 
 # 4. Graficación comparativa
 plt.figure(figsize=(10, 7))
@@ -198,7 +198,7 @@ plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend(loc='upper right')
 
 plt.figure(figsize=(10, 7))
-plt.plot(t * 1000, componente_pulsos, color='blue', linestyle='--', label=f'Componente pura de {f_pulsos} Hz')
+plt.plot(t * 1000, entrada, color='blue', linestyle='--', label=f'Señal de entrada')
 plt.plot(t*1000, salida_band, "orange", label=f'Señal filtrada')
 plt.plot(t*1000, detecciones, "green", label=f'Deteccion de pulsos de {f_pulsos} Hz')
 plt.ylabel('Amplitud')
