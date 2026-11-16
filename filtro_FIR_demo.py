@@ -4,7 +4,7 @@ from scipy.signal import firwin, lfilter, hilbert
 
 
 
-def detectar_pulso_fir(senal, fs, h_band, ancho_banda=20.0, umbral_factor=0.4):
+def detectar_pulso_fir(senal, umbral_factor=0.6):
     """
     Detecta pulsos de una frecuencia específica usando un filtro FIR y la envolvente de Hilbert.
     
@@ -22,9 +22,9 @@ def detectar_pulso_fir(senal, fs, h_band, ancho_banda=20.0, umbral_factor=0.4):
     """
     # 3. Aplicar el filtro FIR a la señal ruidosa
     ##senal_filtrada = lfilter(coeffs_fir, 1.0, senal) ## analoga a "arm_fir_q15()"
-    salida_band = np.convolve(senal, h_band, mode='same')
-    
-    senal_filtrada = salida_band
+
+    ###salida_band = np.convolve(senal, h_band, mode='same')
+    senal_filtrada = senal
     # 4. Calcular la envolvente usando la Transformada de Hilbert
     senal_analitica = hilbert(senal_filtrada)
     envolvente = np.abs(senal_analitica)
@@ -32,7 +32,7 @@ def detectar_pulso_fir(senal, fs, h_band, ancho_banda=20.0, umbral_factor=0.4):
     # 5. Detección mediante umbral sobre la envolvente normalizada
     max_env = np.max(envolvente)
 
-    umbral_factor = 0.6
+
     ##### Se asegura que el pulso esta dentro del 60% del maximo
     if max_env > 0:
         envolvente_norm = envolvente / max_env ## normaliza: rango[1.0 - 0.0]
@@ -158,7 +158,7 @@ salida_low = np.convolve(entrada, h_low, mode='same')
 
 h_band = diseñar_fir_pasa_banda(fs, 75-10, 75+10, N)
 salida_band = np.convolve(entrada, h_band, mode='same')
-senal_filt, env, detecciones = detectar_pulso_fir(entrada, fs, h_band)
+senal_filt, env, detecciones = detectar_pulso_fir(salida_band, h_band)
 
 # 4. Graficación comparativa
 plt.figure(figsize=(10, 7))
