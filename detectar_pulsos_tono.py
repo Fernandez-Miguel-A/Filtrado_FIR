@@ -63,11 +63,11 @@ if __name__ == '__main__':
     componente_alta = np.sin(2 * np.pi * f_alta * t)
     a = np.zeros(65, dtype=float)
     b = 4.0 * np.sin(2 * np.pi * f_pulsos * t[0:10])
-    c = np.zeros(15, dtype=float)
+    c = np.zeros(15*1, dtype=float)
     d = 4.0 * np.sin(2 * np.pi * f_pulsos * t[0:10])
     e = np.zeros(150, dtype=float)
     f = 4.0 * np.sin(2 * np.pi * f_pulsos * t[0:10])
-    g = np.zeros(len(t)-65-10-15-10-150-10, dtype=float)
+    g = np.zeros(len(t)-65-10-15*1-10-150-10, dtype=float)
     componente_pulsos = np.concatenate((a, b, c, d, e, f, g))
     print(f"\n\n len(t): {len(t)}, len(componente_pulsos): {len(componente_pulsos)}")
 
