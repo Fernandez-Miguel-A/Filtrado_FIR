@@ -1,5 +1,48 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.signal import firwin, lfilter, hilbert
+
+
+
+def detectar_pulso_fir(senal, fs, h_band, ancho_banda=20.0, umbral_factor=0.4):
+    """
+    Detecta pulsos de una frecuencia específica usando un filtro FIR y la envolvente de Hilbert.
+    
+    Parámetros:
+    - senal: numpy array con la señal ruidosa de entrada.
+    - fs: Frecuencia de muestreo en Hz.
+    - f_pulsos: Frecuencia central del tono a detectar en Hz.
+    - ancho_banda: Ancho de banda total del filtro pasa-banda en Hz.
+    - umbral_factor: Factor multiplicativo para definir el umbral de detección (0 a 1).
+    
+    Retorna:
+    - senal_filtrada: Señal resultante del filtro FIR.
+    - envolvente: Envolvente analítica de la señal filtrada.
+    - instantes_deteccion: Máscara booleana o índices donde se detectó el pulso.
+    """
+    # 3. Aplicar el filtro FIR a la señal ruidosa
+    ##senal_filtrada = lfilter(coeffs_fir, 1.0, senal) ## analoga a "arm_fir_q15()"
+    salida_band = np.convolve(senal, h_band, mode='same')
+    
+    senal_filtrada = salida_band
+    # 4. Calcular la envolvente usando la Transformada de Hilbert
+    senal_analitica = hilbert(senal_filtrada)
+    envolvente = np.abs(senal_analitica)
+    
+    # 5. Detección mediante umbral sobre la envolvente normalizada
+    max_env = np.max(envolvente)
+
+    umbral_factor = 0.6
+    ##### Se asegura que el pulso esta dentro del 60% del maximo
+    if max_env > 0:
+        envolvente_norm = envolvente / max_env ## normaliza: rango[1.0 - 0.0]
+    else:
+        envolvente_norm = envolvente
+        
+    instantes_deteccion = envolvente_norm > umbral_factor
+    
+    return senal_filtrada, envolvente, instantes_deteccion
+
 
 def diseñar_fir_pasa_altos(fs, fc, N):
     if N % 2 == 0:
@@ -87,15 +130,24 @@ fc = 200.0    # Frecuencia de corte (Hz)
 N = 31        # Número de taps (impar)
 
 # 2. Generar señal en el tiempo (0.1 segundos)
-t = np.linspace(0, 0.1, int(fs * 0.1), endpoint=False)
+t = np.linspace(0, 0.1, int(fs * 0.1*10), endpoint=False)
 f_baja = 50.0   # Componente de 50 Hz (debe eliminarse)
 f_alta = 300.0  # Componente de 300 Hz (debe pasar)
+f_pulsos = 75.0
 
 componente_baja = np.sin(2 * np.pi * f_baja * t)
 componente_alta = np.sin(2 * np.pi * f_alta * t)
+a = np.zeros(65, dtype=float)
+b = 4.0 * np.sin(2 * np.pi * f_pulsos * t[0:10])
+c = np.zeros(15*1, dtype=float)
+d = 4.0 * np.sin(2 * np.pi * f_pulsos * t[0:10])
+e = np.zeros(150, dtype=float)
+f = 4.0 * np.sin(2 * np.pi * f_pulsos * t[0:10])
+g = np.zeros(len(t)-65-10-15*1-10-150-10, dtype=float)
+componente_pulsos = np.concatenate((a, b, c, d, e, f, g))
 
 # Entrada: suma de ambas senoides
-entrada = componente_baja + componente_alta
+entrada = componente_baja + componente_alta + componente_pulsos
 
 # 3. Filtrar aplicando convolución
 h_high = diseñar_fir_pasa_altos(fs, fc, N)
@@ -103,6 +155,10 @@ salida_high = np.convolve(entrada, h_high, mode='same')
 
 h_low = diseñar_fir_pasa_bajos(fs, fc, N)
 salida_low = np.convolve(entrada, h_low, mode='same')
+
+h_band = diseñar_fir_pasa_banda(fs, 75-10, 75+10, N)
+salida_band = np.convolve(entrada, h_band, mode='same')
+senal_filt, env, detecciones = detectar_pulso_fir(entrada, fs, h_band)
 
 # 4. Graficación comparativa
 plt.figure(figsize=(10, 7))
@@ -137,6 +193,14 @@ plt.subplot(4, 1, 4)
 plt.plot(t * 1000, salida_low, color='red', label='Salida Filtrada (FIR Pasa Bajos)')
 plt.title('3. Señal Salida Filtrada (Oscilaciones lentas eliminadas)')
 plt.xlabel('Tiempo (ms)')
+plt.ylabel('Amplitud')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend(loc='upper right')
+
+plt.figure(figsize=(10, 7))
+plt.plot(t * 1000, componente_pulsos, color='blue', linestyle='--', label=f'Componente pura de {f_pulsos} Hz')
+plt.plot(t*1000, salida_band, "orange", label=f'Señal filtrada')
+plt.plot(t*1000, detecciones, "green", label=f'Deteccion de pulsos de {f_pulsos} Hz')
 plt.ylabel('Amplitud')
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend(loc='upper right')
