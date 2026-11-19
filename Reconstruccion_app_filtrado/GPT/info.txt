@@ -1,0 +1,18 @@
+#define    RECARGA_play_sound    1024/48000  // 21,33 ms
+
+int main(void)
+{
+    AudioPlayer_Init();
+
+    while (1){
+        MX_USB_HOST_Process();
+
+        if (Appli_state == APPLICATION_READY){
+            if (AudioPlayer_GetState() == AUDIO_PLAYER_STOPPED){
+                AudioPlayer_Start("0:/MUSIC.WAV");
+            }
+        }
+
+        AudioPlayer_Task();
+    }
+}
